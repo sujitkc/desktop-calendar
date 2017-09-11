@@ -1,7 +1,14 @@
 The command:
-./desktop-calendar -y year -h holidays.csv
+./desktop-calendar <year> <holidays-file-name>
 
-generates a tex file desktop-calendar-year.tex.
+generates a pdf file desktop-calendar-year.pdf.
 
-This file is used by running desktop-calendar.sh to generate the PDF calendar as follows:
-./build-calendar directory
+Features included:
+------------------
+- One month per page
+- Holidays and weekends marked.
+
+Features excluded in this version
+---------------------------------
+- Personalised photos
+- Holiday list per page
