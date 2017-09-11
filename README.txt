@@ -1,3 +1,9 @@
+System Requirements
+-------------------
+- Linux/Unix like environment
+- Ocaml with Ocamllex and Ocamlyacc
+- LaTeX with pdflatex
+
 The command:
 ./desktop-calendar <year> <holidays-file-name>
 
