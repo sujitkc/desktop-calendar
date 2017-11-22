@@ -16,8 +16,8 @@ input:	 line input 	{ }
 line:	NEWLINE		{ }
 	| date NEWLINE	{ Printf.printf "\t%s\n" (Lexer.string_of_date $1); flush stdout }
 
-date:   INTEGER  COMMA ID COMMA INTEGER
-    { ($1, (Lexer.month_of_string $3), $5) }
+date:   INTEGER  COMMA ID (* COMMA INTEGER *)
+    { ($1, (Lexer.month_of_string $3)(*, $5*)) }
 ;
 
 %%

@@ -30,6 +30,8 @@ val isLeapYear : int -> bool
 val daysInMonth : month -> int -> int
 val nextMonth : month -> month
 val string_of_month : month -> string
+val int_of_month : month -> int
+
 type date = Date of int * month * int
 val string_of_date : date -> string
 val is_weekend : date -> bool

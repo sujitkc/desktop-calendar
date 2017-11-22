@@ -184,12 +184,38 @@ let make_row strweek =
 
 (* Given a string month, generate a latex table for it. *)
 let make_month_table (month, string_month) =
-  let slide_header = "\\begin{frame}\n\\begin{center}"
-  and slide_footer = "\\end{center}\n\\end{frame}" in
+  let image = "images/"
+    ^ (string_of_int (Calendar.int_of_month month)) ^ ".jpg" in
+  let background_image =
+      "{\n"
+      ^ "\\usebackgroundtemplate{\n"
+      ^ "\\tikz\\node[opacity=0.3] {\\includegraphics[width=\\paperwidth]{" ^ image ^ "}};\n"
+      ^ "}\n"
+  and slide_header = "\\begin{frame}\n\\begin{center}\n"
+    ^ "\\begin{tabular}{c @{\\hspace{1cm}} c}\n"
+    ^ "\\begin{minipage}{0.6\\textwidth}\n"
+    ^ "\\vspace{-4cm}\n"
+
+
+  and slide_footer = 
+      "\\vspace{1cm}\n"
+    ^ "\\begin{scriptsize}\n"
+    ^ "\\begin{tabular}{| l @{\\hspace{0.5cm}} l |}\n"
+    ^ "\\hline\n"
+    ^ "\\hline\n"
+    ^ "\\end{tabular}\n"
+    ^ "\\end{scriptsize}\n"
+    ^ "\\end{minipage}\n"
+    ^ "&\n"
+    ^ "\\fcolorbox{\\phbordercolour}{white}{\\includegraphics[width=0.35\\textwidth]{"^ image ^"}}\n"
+    ^ "\\end{tabular}\n"
+    ^ "\\end{center}\n\\end{frame}\n"
+  in
+
   let rec n_header_cells = function
     0 -> ""
   | n -> "c |" ^ (n_header_cells (n - 1)) in
-  let theader = "\\begin{center} \n \\begin{tabular}{|" ^ (n_header_cells 7) ^ "}" 
+  let theader = "\\begin{tabular}{|" ^ (n_header_cells 7) ^ "}" 
     ^ "\n\\hline"
     ^ "\\multicolumn{7}{| c |}"
     ^ "{\\textsc{\\color{\\monthcolour}\\underline{\\scalebox{1.2}{\\Large "
@@ -204,10 +230,10 @@ let make_month_table (month, string_month) =
     ^ "\\cellcolor{\\headercolour}\\textbf{\\color{mymaroon}Fr} & "
     ^ "\\cellcolor{\\headercolour}\\textbf{\\color{mymaroon}Sa} \\\\"
 
-  and tfooter = "\n\\hline\n\\end{tabular} \n \\end{center}" in
+  and tfooter = "\n\\hline\n\\end{tabular} \n" in
   let rows = List.map (fun month -> make_row month) string_month in
   let tbody   = List.fold_left (fun a b -> a ^ "\n" ^ b) "" rows in
-    slide_header ^ theader ^ tbody ^ "\n" ^ tfooter ^ slide_footer
+    background_image ^ slide_header ^ theader ^ tbody ^ "\n" ^ tfooter ^ slide_footer
 
 (* Read the initial common portion of the output latex file from before.tex and return as string *)
 let before y =
@@ -215,8 +241,18 @@ let before y =
   and b2 = read_file "b2.tex" in
   b1 ^ "\n" ^ "\\date{\\Huge{" ^ (string_of_int y) ^ "}}" ^ "\n" ^ b2
 
+let last_slide = "
+\\begin{frame}{\\underline{\\textsc{Romance for Geeks}}}
+
+\\begin{center}
+\\fcolorbox{\\phbordercolour}{white}{\\includegraphics[width=0.3\\textwidth]{images/13.jpg}}
+\\end{center}
+\\myheader{With best compliments from Sujit \\& Shilpi\\footnote{Powered by OCaml and \\LaTeX}}
+\\end{frame}
+"
+
 (* Return the last part of the output latex file *)
-let after () = "\n" ^ "\\end{document}"
+let after = last_slide ^ "\n" ^ "\\end{document}"
 
 (* Given a list of attendances attendance_lst, generate a latex string corresponding to it. *)
 let calendar_to_tex year holidays =
@@ -225,7 +261,7 @@ let calendar_to_tex year holidays =
     let table_lst = List.map make_month_table month_lst in
     (List.fold_left (fun a b -> a ^ "\n" ^ b) " " table_lst)
   in
-  (before year) ^ "\n" ^ tables ^ "\n" ^ (after ())
+  (before year) ^ "\n" ^ tables ^ "\n" ^ after
 
 (* Generate the latex file for the attendance list. *)
 let gen_latex_file latex =
@@ -238,8 +274,17 @@ let main () =
   if num_of_args <> 3 then
     print_string "Exactly two command-line argument required.\n"
   else
-    let h = (holiday_list Sys.argv.(2)) in
-    let latex = (calendar_to_tex (int_of_string Sys.argv.(1)) h) in
+    let y = (int_of_string Sys.argv.(1)) in
+    let h = List.map
+      (
+        fun hd ->
+          match hd with
+            Calendar.Working(Calendar.Date(d, m, _)) -> Calendar.Working(Calendar.Date(d, m, y))
+          | Calendar.Holiday(Calendar.Date(d, m, _), s, ht) -> Calendar.Holiday(Calendar.Date(d, m, y), s, ht)
+          | Calendar.Vacation(Calendar.Date(d1, m1, _), Calendar.Date(d2, m2, _), s, ht) -> Calendar.Vacation(Calendar.Date(d1, m1, y), Calendar.Date(d2, m2, y), s, ht)
+      )
+      (holiday_list Sys.argv.(2)) in
+    let latex = (calendar_to_tex y h) in
     begin
       gen_latex_file latex;
       print_string "generating latex file ...";
@@ -253,16 +298,3 @@ let main () =
     end
 
 let _ = main ()
-
-(* 
-let gen_pdf (ifile) =
-  (ifile |> csv_to_student_list |> (make_lists_of_n rows_per_page) |> attendance_to_tex |> gen_latex_file)();
-  print_string "generating latex file ...";
-  let _ = Sys.command ("pdflatex "
-          ^ "-output-directory=output output/"
-          ^ "attendance.tex  >/dev/null") in ();                    (* latex to pdf id *)
-  print_string "generated. \n";
-(*  let _ = Sys.command ("rm " ^ "output/" ^ "attendance.tex") in (); (* remove latex file *) *)
-  let _ = Sys.command ("rm " ^ "output/" ^ "attendance.aux") in (); (* remove aux file *)
-  let _ = Sys.command ("rm " ^ "output/" ^ "attendance.log") in ()  (* remove log file *)
-*)

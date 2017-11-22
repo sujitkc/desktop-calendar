@@ -22,8 +22,8 @@ holiday : date COMMA HTYPE { Calendar.Holiday($1, "Holiday", $3) }
 
 vacation : date HYPHEN date COMMA HTYPE { Calendar.Vacation($1, $3, "Vacation", $5) }
 
-date:   INTEGER  ID INTEGER
-    { Calendar.Date($1, (Calendar.month_of_string $2), $3) }
+date:   INTEGER  ID
+    { Calendar.Date($1, (Calendar.month_of_string $2), 0) }
 ;
 %%
 
