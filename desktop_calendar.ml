@@ -183,25 +183,45 @@ let make_row strweek =
   iter strweek
 
 (* Given a string month, generate a latex table for it. *)
-let make_month_table (month, string_month) =
+let make_month_table (month, string_month) holidays =
   let image = "images/"
     ^ (string_of_int (Calendar.int_of_month month)) ^ ".jpg" in
   let background_image =
-      "{\n"
-      ^ "\\usebackgroundtemplate{\n"
-      ^ "\\tikz\\node[opacity=0.3] {\\includegraphics[width=\\paperwidth]{" ^ image ^ "}};\n"
-      ^ "}\n"
+    "{\n"
+    ^ "\\usebackgroundtemplate{\n"
+    ^ "\\tikz\\node[opacity=0.3] {\\includegraphics[width=\\paperwidth]{" ^ image ^ "}};\n"
+    ^ "}\n"
+
   and slide_header = "\\begin{frame}\n\\begin{center}\n"
     ^ "\\begin{tabular}{c @{\\hspace{1cm}} c}\n"
     ^ "\\begin{minipage}{0.6\\textwidth}\n"
-    ^ "\\vspace{-4cm}\n"
+    ^ "\\vspace{-4cm}\n" in
 
+  let month_holidays = List.filter
+    (
+      fun h ->
+        match h with
+          Calendar.Working(Calendar.Date(_, m, _)) -> m = month
+        | Calendar.Holiday(Calendar.Date(_, m, _), s, ht) -> m = month
+        | Calendar.Vacation(Calendar.Date(_, m, _), Calendar.Date(_, _, _), _, _) -> m = month
+    ) holidays in
+  let holiday_rows = List.map
+    (
+      fun h ->
+        match h with
+          Calendar.Working(Calendar.Date(d, _, _)) -> (string_of_int d) ^ " & working \\\\\n"
+        | Calendar.Holiday(Calendar.Date(d, _, _), s, ht) -> (string_of_int d) ^ " & holiday \\\\\n"
+        | Calendar.Vacation(Calendar.Date(d1, m1, _), Calendar.Date(d2, m2, _), _, _) ->
+            (string_of_int d1) ^ " " ^ (Calendar.string_of_month m1) ^ " - " ^
+            (string_of_int d2) ^ " " ^ (Calendar.string_of_month m2) ^ " & vacation \\\\\n" 
+    ) month_holidays in
 
-  and slide_footer = 
+  let slide_footer = 
       "\\vspace{1cm}\n"
     ^ "\\begin{scriptsize}\n"
     ^ "\\begin{tabular}{| l @{\\hspace{0.5cm}} l |}\n"
     ^ "\\hline\n"
+    ^ (List.fold_left (fun a b -> a ^ b) "" holiday_rows)
     ^ "\\hline\n"
     ^ "\\end{tabular}\n"
     ^ "\\end{scriptsize}\n"
@@ -258,7 +278,7 @@ let after = last_slide ^ "\n" ^ "\\end{document}"
 let calendar_to_tex year holidays =
   let tables =
     let month_lst = string_year_calendar year holidays in
-    let table_lst = List.map make_month_table month_lst in
+    let table_lst = List.map (fun m -> (make_month_table m holidays)) month_lst in
     (List.fold_left (fun a b -> a ^ "\n" ^ b) " " table_lst)
   in
   (before year) ^ "\n" ^ tables ^ "\n" ^ after

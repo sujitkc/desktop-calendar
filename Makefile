@@ -26,4 +26,4 @@ desktop_calendar.cmi : desktop_calendar.mli calendar.cmi
 	$(OCAMLC) -c desktop_calendar.mli
 
 clean:
-	rm *.cmx *.cmi *.cmo lexer.ml lexer.mli holidayparser.ml holidayparser.mli
+	rm *.cmx *.cmi *.cmo lexer.ml lexer.mli holidayparser.ml holidayparser.mli desktop_calendar

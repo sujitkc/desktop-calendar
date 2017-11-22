@@ -22,11 +22,11 @@ Features included:
 ------------------
 - One month per page
 - Holidays and weekends marked.
+- Holiday list per page
 - photos (currently to be included manually in the images/ directory)
 
 Features excluded in this version
 ---------------------------------
-- Holiday list per page
 - Arbitrary holiday descriptions.
   For example:
     "Ram Navami", "Sujit's Birthday"
