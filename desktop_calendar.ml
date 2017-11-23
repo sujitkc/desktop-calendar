@@ -257,7 +257,7 @@ let make_month_table (month, string_month) holidays =
 
 (* Read the initial common portion of the output latex file from before.tex and return as string *)
 let before y =
- let b1 = read_file "b1.tex"
+  let b1 = read_file "b1.tex"
   and b2 = read_file "b2.tex" in
   b1 ^ "\n" ^ "\\date{\\Huge{" ^ (string_of_int y) ^ "}}" ^ "\n" ^ b2
 

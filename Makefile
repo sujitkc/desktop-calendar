@@ -2,8 +2,16 @@ OCAMLC=ocamlc
 OCAMLOPT = ocamlopt
 
 desktop_calendar : desktop_calendar.cmo holidayparser.cmo lexer.cmo calendar.cmo
-	$(OCAMLC) -o desktop_calendar calendar.cmo lexer.cmo holidayparser.cmo desktop_calendar.cmo
-
+	$(OCAMLC) -o desktop_calendar calendar.cmo lexer.cmo holidayparser.cmo desktop_calendar.cmo; \
+	if [ ! -d images ]; \
+	then \
+		mkdir images; \
+	fi; \
+	if [ ! -d output ]; \
+	then \
+		mkdir output; \
+	fi; \
+	echo "Build successful!"
 lexer.ml : lexer.mll calendar.cmi
 	ocamllex lexer.mll
 	$(OCAMLC) -c lexer.ml
