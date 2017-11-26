@@ -27,12 +27,12 @@ Features included:
 - Holidays and weekends marked.
 - Holiday list per page
 - photos (currently to be included manually in the images/ directory)
-
-Features excluded in this version
----------------------------------
 - Arbitrary holiday descriptions.
   For example:
     "Ram Navami", "Sujit's Birthday"
+
+Features excluded in this version
+---------------------------------
 - arbitrary image directory provided through command-line argument.
   For example:
      ./desktop-calendar <year> <holidays-file-name> <image-directory>

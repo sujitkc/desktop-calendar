@@ -210,10 +210,10 @@ let make_month_table (month, string_month) holidays =
       fun h ->
         match h with
           Calendar.Working(Calendar.Date(d, _, _)) -> (string_of_int d) ^ " & working \\\\\n"
-        | Calendar.Holiday(Calendar.Date(d, _, _), s, ht) -> (string_of_int d) ^ " & holiday \\\\\n"
-        | Calendar.Vacation(Calendar.Date(d1, m1, _), Calendar.Date(d2, m2, _), _, _) ->
+        | Calendar.Holiday(Calendar.Date(d, _, _), s, ht) -> (string_of_int d) ^ " & " ^ s ^ "\\\\\n"
+        | Calendar.Vacation(Calendar.Date(d1, m1, _), Calendar.Date(d2, m2, _), s, _) ->
             (string_of_int d1) ^ " " ^ (Calendar.string_of_month m1) ^ " - " ^
-            (string_of_int d2) ^ " " ^ (Calendar.string_of_month m2) ^ " & vacation \\\\\n" 
+            (string_of_int d2) ^ " " ^ (Calendar.string_of_month m2) ^ " & " ^ s ^ "\\\\\n" 
     ) month_holidays in
 
   let slide_footer = 
