@@ -98,6 +98,7 @@ let month_calendar m y =
         0 (7 - (List.length begin_padded_month_list) mod 7)) in
   (split_weeks padded_month_list)
 
+(* Reads an input file line by line and returns a list of lines. *)
 let read_lines_from_file filename = 
   let chan = open_in filename in
   let rec iter lines =
@@ -108,15 +109,18 @@ let read_lines_from_file filename =
       List.rev lines
   in
   iter []
- 
+
+(* Reads an entired file into a single string. *) 
 let read_file filename = 
   let lines = read_lines_from_file filename in
   (List.fold_left (fun a b -> (a ^ "\n" ^ b)) "" lines)
 
+(* Function to parse a single holiday. (Each holiday is placed in a single line of the input file.) *)
 let parse_holiday str_holiday =
   let lexbuf = Lexing.from_string str_holiday in
   Holidayparser.parse_calendarday Lexer.scan lexbuf
- 
+
+(* Parses the holiday list file and returns a list of holidays. *) 
 let holiday_list filename =
   let str_holidays = read_lines_from_file filename in
   List.map parse_holiday str_holidays
@@ -261,11 +265,17 @@ let before y =
   and b2 = read_file "b2.tex" in
   b1 ^ "\n" ^ "\\date{\\Huge{" ^ (string_of_int y) ^ "}}" ^ "\n" ^ b2
 
-let last_slide = "
+let last_slide = 
+    "{\n"
+    ^ "\\usebackgroundtemplate{\n"
+    ^ "\\tikz\\node[opacity=0.3] {\\includegraphics[width=\\paperwidth]{" ^ "images/13.jpg" ^ "}};\n"
+    ^ "}\n" ^
+
+"
 \\begin{frame}{\\underline{\\textsc{Romance for Geeks}}}
 
 \\begin{center}
-\\fcolorbox{\\phbordercolour}{white}{\\includegraphics[width=0.3\\textwidth]{images/13.jpg}}
+\\fcolorbox{\\phbordercolour}{white}{\\includegraphics[width=0.6\\textwidth]{images/13.jpg}}
 \\end{center}
 \\myheader{With best compliments from Sujit \\& Shilpi\\footnote{Powered by OCaml and \\LaTeX}}
 \\end{frame}
