@@ -30,9 +30,14 @@ Features included:
 - Arbitrary holiday descriptions.
   For example:
     "Ram Navami", "Sujit's Birthday"
+  (see 'holidays.txt' for example).
 
 Features excluded in this version
 ---------------------------------
 - arbitrary image directory provided through command-line argument.
   For example:
      ./desktop-calendar <year> <holidays-file-name> <image-directory>
+- Healthiness check of the images/ directory, e.g. proper numbering of all
+  files, proper file extensions (only.jpg accepted). The user has to ensure
+  that the input photos are healthy. The behaviour of the program on 
+  encountering an error here is unpredictable.
