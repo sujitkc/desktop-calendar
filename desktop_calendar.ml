@@ -272,10 +272,10 @@ let last_slide =
     ^ "}\n" ^
 
 "
-\\begin{frame}{\\underline{\\textsc{Romance for Geeks}}}
+\\begin{frame}{}
 
 \\begin{center}
-\\fcolorbox{\\phbordercolour}{white}{\\includegraphics[width=0.6\\textwidth]{images/13.jpg}}
+\\fcolorbox{\\phbordercolour}{white}{\\includegraphics[height=0.6\\textheight]{images/13.jpg}}
 \\end{center}
 \\myheader{With best compliments from Sujit \\& Shilpi\\footnote{Powered by OCaml and \\LaTeX}}
 \\end{frame}
