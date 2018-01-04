@@ -122,8 +122,21 @@ let parse_holiday str_holiday =
 
 (* Parses the holiday list file and returns a list of holidays. *) 
 let holiday_list filename =
+  let get_date day =
+    match day with
+      Calendar.Working(d) -> d
+    | Calendar.Holiday(d, _, _) -> d
+    | Calendar.Vacation(d, _, _, _) -> d
+  in 
   let str_holidays = read_lines_from_file filename in
-  List.map parse_holiday str_holidays
+  let holidays = List.map parse_holiday str_holidays in
+  List.sort (
+      fun d1 d2 ->
+        let dt1 = get_date d1 and dt2 = get_date d2 in
+        if Calendar.isLater dt1 dt2 then 1
+        else if Calendar.isLater dt2 dt1 then -1
+        else 0
+    ) holidays
 
 (* Based on the holiday/working status of a specific date, suggests a colour to be used in the output. *)
 let strdate_colour day holidays =
