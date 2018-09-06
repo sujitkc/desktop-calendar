@@ -20,9 +20,9 @@ type weekDay =
   | Thursday
   | Friday
   | Saturday
-val nextWeekDay : weekDay -> weekDay
-val weekDayNumber : weekDay -> int
-val prevWeekDay : weekDay -> weekDay
+val next_week_day : weekDay -> weekDay
+val week_day_number : weekDay -> int
+val prev_week_day : weekDay -> weekDay
 val weekday_of_string : string -> weekDay
 val string_of_weekday : weekDay -> string
 val month_of_string : string -> month
@@ -47,7 +47,7 @@ type calendarday =
 
 val string_of_calendarday : calendarday -> string
 val nextDate : date -> date
-val isLater : date -> date -> bool
+val is_later : date -> date -> bool
 val daysInBetween : date -> date -> date list
 val numOfDaysInBetween : date -> date -> int
 val countWeekDays : weekDay -> int -> weekDay

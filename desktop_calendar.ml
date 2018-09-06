@@ -89,7 +89,7 @@ let month_calendar m y =
   and first_weekday = (Calendar.getWeekDay (Calendar.Date(1, m, y))) in
   let begin_padded_month_list =
     List.append 
-      (repetitive_list 0 ((Calendar.weekDayNumber first_weekday) - 1))
+      (repetitive_list 0 ((Calendar.week_day_number first_weekday) - 1))
       month_list in
   let padded_month_list =
     List.append 
@@ -133,8 +133,8 @@ let holiday_list filename =
   List.sort (
       fun d1 d2 ->
         let dt1 = get_date d1 and dt2 = get_date d2 in
-        if Calendar.isLater dt1 dt2 then 1
-        else if Calendar.isLater dt2 dt1 then -1
+        if Calendar.is_later dt1 dt2 then 1
+        else if Calendar.is_later dt2 dt1 then -1
         else 0
     ) holidays
 
@@ -322,9 +322,13 @@ let main () =
       (
         fun hd ->
           match hd with
-            Calendar.Working(Calendar.Date(d, m, _)) -> Calendar.Working(Calendar.Date(d, m, y))
-          | Calendar.Holiday(Calendar.Date(d, m, _), s, ht) -> Calendar.Holiday(Calendar.Date(d, m, y), s, ht)
-          | Calendar.Vacation(Calendar.Date(d1, m1, _), Calendar.Date(d2, m2, _), s, ht) -> Calendar.Vacation(Calendar.Date(d1, m1, y), Calendar.Date(d2, m2, y), s, ht)
+            Calendar.Working(Calendar.Date(d, m, _))            ->
+                Calendar.Working(Calendar.Date(d, m, y))
+          | Calendar.Holiday(Calendar.Date(d, m, _), s, ht)     ->
+                Calendar.Holiday(Calendar.Date(d, m, y), s, ht)
+          | Calendar.Vacation(Calendar.Date(d1, m1, _), 
+              Calendar.Date(d2, m2, _), s, ht)                  ->
+                Calendar.Vacation(Calendar.Date(d1, m1, y), Calendar.Date(d2, m2, y), s, ht)
       )
       (holiday_list Sys.argv.(2)) in
     let latex = (calendar_to_tex y h) in

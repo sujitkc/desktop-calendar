@@ -1,0 +1,52 @@
+APPLICATION SPECIFIC
+--------------------
+The application generates a PDF document for the desktop calendar.
+The main part of the program is a compute the calendar for a given year.
+The data-types defined are to store pertinent values needed to construct
+  the calendar, e.g. holidays, their types etc.
+Modules:
+- Calendar: computes the calendar for a given year
+- Desktop_calendar: Generates the PDF.
+- Holidayparser: Parser module for parsing a holiday
+- Lexer: the lexical analyser for supporting parsing
+
+PARSER SPECIFIC
+---------------
+The module name is always the ML filename with the first letter capitalised.
+Holiday parser has been specified in holidayparser.mly.
+This generates holidayparser.ml and holidayparser.mli
+Therefore, Holidayparser is the name of the parser module.
+ 
+Tokens are defined in the parser using the %token tag.
+Tokens may have an underlying value type or may not. For example:
+%token <int> INTEGER defines a token integer which will also carry the of the
+ integer that has been parsed.
+%token WS defines the whitespace which doesn't need to carry any value with
+ it.
+ 
+The starting parser function is declared as parse_calendarday using %start tag.
+This is also equivalent to telling Ocamlyacc that this is the start symbol.
+The return type of the parser function is declared using %type tag.
+
+Each parser rule computes a data value which of a matching type to the
+  declared type of the respective non-terminal.
+Non-terminal types may be left undeclared in which case they will be
+  inferred automatically if possible.
+$1, $2 ... refer to the symbol position in the RHS of a production.
+  
+LEXER SPECIFIC
+---------------
+Lexer modes/states can be implemented using mutually recursive definitions.
+e.g. scan and desc rules in the lexer.
+On seeing a semicolon, scan calls desc. On seeing a semicolon, desc
+  calls back scan.
+
+
+OCaml/Makefile SPECIFIC
+-----------------------
+Exception handling
+Advantages of union type
+ml and mli files
+cmo and cmi files
+Dependencies defined in terms of cmi files.
+List map, iter etc.

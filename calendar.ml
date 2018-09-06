@@ -23,7 +23,7 @@ type weekDay =
   | Friday
   | Saturday
 
-let nextWeekDay = function
+let next_week_day = function
     Sunday    -> Monday
   | Monday    -> Tuesday
   | Tuesday   -> Wednesday
@@ -32,7 +32,7 @@ let nextWeekDay = function
   | Friday    -> Saturday
   | Saturday  -> Sunday
 
-let weekDayNumber = function
+let week_day_number = function
     Sunday    -> 1
   | Monday    -> 2
   | Tuesday   -> 3
@@ -41,7 +41,7 @@ let weekDayNumber = function
   | Friday    -> 6
   | Saturday  -> 7
 
-let prevWeekDay = function
+let prev_week_day = function
     Sunday    -> Saturday
   | Monday    -> Sunday
   | Tuesday   -> Monday
@@ -224,7 +224,7 @@ let nextDate dt =
     (1, January, 2014) (2, January, 2014)   --> false
     (1, January, 2014) (31, December, 2013) --> false
 *)
-let isLater dt1 dt2 =
+let is_later dt1 dt2 =
   let Date(d1, m1, y1) = dt1 and Date(d2, m2, y2) = dt2 in
   if y1 = y2 then
     if m1 = m2 then
@@ -241,7 +241,7 @@ let rec daysInBetween d1 d2 =
     else
       (iter (nextDate d1) d2 (d1::acc))
   in
-    if (isLater d1 d2) then
+    if (is_later d1 d2) then
       raise (CalendarException ("Calendar.daysInBetween : d1 " ^ (string_of_date d1) ^ " is later than the d2 " ^ (string_of_date d2)))
     else (iter d1 d2 [])
 
@@ -260,7 +260,7 @@ let rec numOfDaysInBetween d1 d2 =
     else
       (iter (nextDate d1) d2 (n + 1))
   in
-    if (isLater d1 d2) then
+    if (is_later d1 d2) then
       -(numOfDaysInBetween d2 d1)
     else (iter d1 d2 0)
 
@@ -271,8 +271,8 @@ let rec numOfDaysInBetween d1 d2 =
 let countWeekDays wd n =
   let rec aux wd n =
       if n = 0 then wd
-      else if n > 0 then aux (nextWeekDay wd) (n - 1)
-      else               aux (prevWeekDay wd) (n + 1)
+      else if n > 0 then aux (next_week_day wd) (n - 1)
+      else               aux (prev_week_day wd) (n + 1)
   and n' = n mod 7
   in
   aux wd n'
@@ -301,7 +301,7 @@ let is_weekend dt =
 *)
 let rec dateRange d1 d2 =
   let rec iter d1' d2' range =
-    if (isLater d1' d2') then (dateRange d2' d1')
+    if (is_later d1' d2') then (dateRange d2' d1')
     else if (d1' = d2') then (d2' :: range)
     else (iter (nextDate d1') d2' (d1' :: range))
   in

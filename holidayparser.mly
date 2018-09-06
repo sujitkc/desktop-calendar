@@ -15,7 +15,8 @@
 %%
 
 /* calendarday */
-parse_calendarday : holiday { $1 }
+parse_calendarday :
+    holiday   { $1 }
   | vacation  { $1 }
 ;
 

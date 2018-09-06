@@ -12,11 +12,12 @@ desktop_calendar : desktop_calendar.cmo holidayparser.cmo lexer.cmo calendar.cmo
 		mkdir output; \
 	fi; \
 	echo "Build successful!"
-lexer.ml : lexer.mll calendar.cmi
+
+lexer.ml : lexer.mll calendar.cmi holidayparser.cmi
 	ocamllex lexer.mll
 	$(OCAMLC) -c lexer.ml
 
-holidayparser.ml : holidayparser.mly calendar.cmi
+holidayparser.cmi : holidayparser.mly calendar.cmi
 	ocamlyacc holidayparser.mly
 	$(OCAMLC) -c holidayparser.mli
 	$(OCAMLC) -c holidayparser.ml
@@ -27,7 +28,7 @@ calendar.cmi : calendar.mli
 calendar.cmo : calendar.ml calendar.cmi
 	$(OCAMLC) -c calendar.ml
 
-desktop_calendar.cmo : desktop_calendar.ml desktop_calendar.cmi calendar.cmi holidayparser.ml lexer.ml
+desktop_calendar.cmo : desktop_calendar.ml desktop_calendar.cmi calendar.cmi holidayparser.cmi lexer.ml
 	$(OCAMLC) -c desktop_calendar.ml
 
 desktop_calendar.cmi : desktop_calendar.mli calendar.cmi
