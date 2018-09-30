@@ -1,0 +1,72 @@
+\documentclass[table]{beamer}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{alltt}
+\usepackage{tikz}
+\usepackage{framed}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{marvosym}
+
+\usetikzlibrary{positioning,shapes,arrows}
+\usetikzlibrary{decorations.markings}
+
+\definecolor{lightblue}{rgb}{0.8,0.93,1.0} % color values Red, Green, Blue
+\definecolor{darkblue}{rgb}{0.4,0.3,1.0} % color values Red, Green, Blue
+\definecolor{Blue}{rgb}{0,0,1.0} % color values Red, Green, Blue
+\definecolor{darkgreen}{rgb}{0,0.7,0.2} % color values Red, Green, Blue
+\definecolor{Red}{rgb}{1,0,0} % color values Red, Green, Blue
+\definecolor{Pink}{rgb}{0.7,0,0.2}
+\definecolor{links}{HTML}{2A1B81}
+\definecolor{mydarkgreen}{HTML}{126215}
+\definecolor{mymaroon}{HTML}{800000}
+\definecolor{myindigo}{HTML}{4b0082}
+\title[Sujit]{{\color{mymaroon}  Birthday Calendar \\ \vspace*{-2cm}}}
+
+%\title[Sujit]{{\color{mymaroon} \setlength{\fboxrule}{2pt} } \\ Desktop Calendar \\ \vspace*{-2cm}}
+\author{}
+\institute{}
+
+\begin{document}
+
+\beamertemplatenavigationsymbolsempty
+\maketitle
+
+\newcommand{\highlight}[1]{{\color{Red}(#1)}}
+\newcommand{\comment}[1]{\begin{tiny}
+{\color{blue}(#1)}
+\end{tiny}}
+\newcommand{\myheader}[1]{
+	{\color{mymaroon}
+		\begin{Large}
+			\begin{center}
+				{#1}
+			\end{center}
+		\end{Large}
+	}
+}
+
+\newcommand{\myminorheader}[1]{
+	{\color{purple}
+		\begin{large}
+			{#1}
+		\end{large}
+	}
+}
+
+\newcommand{\monthcolour}{myindigo}
+\newcommand{\headercolour}{yellow!25}
+\newcommand{\phbordercolour}{mymaroon}
+\newcommand{\workingdaycolour}{black}
+\newcommand{\holidaycolour}{red}
+\newcommand{\weekendcolour}{mymaroon}
+
+\setbeamercolor{background canvas}{bg=violet!25}
+\fboxsep=2pt%padding thickness
+\fboxrule=2pt%border thickness
+
+\arrayrulecolor{red}
+
