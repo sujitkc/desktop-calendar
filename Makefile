@@ -1,8 +1,10 @@
 OCAMLC=ocamlc
 OCAMLOPT = ocamlopt
 
-desktop_calendar : desktop_calendar.cmo holidayparser.cmo lexer.cmo calendar.cmo
-	$(OCAMLC) -o desktop_calendar calendar.cmo lexer.cmo holidayparser.cmo desktop_calendar.cmo; \
+CSV=/usr/local/lib/ocaml/4.02.3/csv/
+
+birthday_calendar : birthday_calendar.cmo calendar.cmo
+	$(OCAMLC) -o birthday_calendar str.cma $(CSV)csv.cma calendar.cmo birthday_calendar.cmo; \
 	if [ ! -d images ]; \
 	then \
 		mkdir images; \
@@ -13,26 +15,17 @@ desktop_calendar : desktop_calendar.cmo holidayparser.cmo lexer.cmo calendar.cmo
 	fi; \
 	echo "Build successful!"
 
-lexer.ml : lexer.mll calendar.cmi holidayparser.cmi
-	ocamllex lexer.mll
-	$(OCAMLC) -c lexer.ml
-
-holidayparser.cmi : holidayparser.mly calendar.cmi
-	ocamlyacc holidayparser.mly
-	$(OCAMLC) -c holidayparser.mli
-	$(OCAMLC) -c holidayparser.ml
-
 calendar.cmi : calendar.mli
 	$(OCAMLC) -c calendar.mli
 
 calendar.cmo : calendar.ml calendar.cmi
 	$(OCAMLC) -c calendar.ml
 
-desktop_calendar.cmo : desktop_calendar.ml desktop_calendar.cmi calendar.cmi holidayparser.cmi lexer.ml
-	$(OCAMLC) -c desktop_calendar.ml
+birthday_calendar.cmo : birthday_calendar.ml birthday_calendar.cmi calendar.cmi
+	$(OCAMLC) -I $(CSV) -c birthday_calendar.ml
 
-desktop_calendar.cmi : desktop_calendar.mli calendar.cmi
-	$(OCAMLC) -c desktop_calendar.mli
+birthday_calendar.cmi : birthday_calendar.mli calendar.cmi
+	$(OCAMLC) -c birthday_calendar.mli
 
 clean:
-	rm *.cmx *.cmi *.cmo lexer.ml lexer.mli holidayparser.ml holidayparser.mli desktop_calendar
+	rm *.cmi *.cmo birthday_calendar
