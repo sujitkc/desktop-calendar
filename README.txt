@@ -17,7 +17,7 @@ Direction for Use
   - Run 'make' here.
     make
 3) Running the application.
-    ./desktop-calendar <year> <holidays-file-name>
+    ./desktop-calendar <year> <holidays-file-name> <image-directory>
 
 generates a pdf file desktop-calendar.pdf in the output/ directory.
 
@@ -34,10 +34,9 @@ Features included:
 
 Features excluded in this version
 ---------------------------------
-- arbitrary image directory provided through command-line argument.
-  For example:
-     ./desktop-calendar <year> <holidays-file-name> <image-directory>
 - Healthiness check of the images/ directory, e.g. proper numbering of all
   files, proper file extensions (only.jpg accepted). The user has to ensure
   that the input photos are healthy. The behaviour of the program on 
   encountering an error here is unpredictable.
+- Flexible rendering of calendar pages based on image aspect ratio.
+- Choice of calendar theme
