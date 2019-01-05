@@ -1,1 +1,0 @@
-exception Birthday_Calendar_exception of string
