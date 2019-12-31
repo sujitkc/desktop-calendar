@@ -355,14 +355,14 @@ let main () =
           ^ "-output-directory=output output/"
           ^ "desktop_calendar.tex  >/dev/null") in ();                    (* latex to pdf id *)
       print_string "generated. \n";
-      let _ = Sys.command ("rm " ^ "output/" ^ "desktop_calendar.tex") in (); (* remove latex file *)
+(*      let _ = Sys.command ("rm " ^ "output/" ^ "desktop_calendar.tex") in (); (* remove latex file *) *)
       let _ = Sys.command ("rm " ^ "output/" ^ "desktop_calendar.aux") in (); (* remove aux file *)
       let _ = Sys.command ("rm " ^ "output/" ^ "desktop_calendar.log") in ()  (* remove log file *)
     end
 
 let test_holiday_list () =
     let y = 2019 in
-    let h = List.map
+    let _ = List.map
       (
         fun hd ->
           match hd with
@@ -374,7 +374,8 @@ let test_holiday_list () =
               Calendar.Date(d2, m2, _), s, ht)                  ->
                 Calendar.Vacation(Calendar.Date(d1, m1, y), Calendar.Date(d2, m2, y), s, ht)
       )
-      (holiday_list "input/holidays-iiitb-2019.txt") in print_endline "done"
+      (holiday_list "input/holidays-iiitb-2019.txt") in
+    print_endline "done"
 
   
 let _ = main ()
