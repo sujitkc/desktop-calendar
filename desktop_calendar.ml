@@ -210,13 +210,14 @@ let make_row strweek =
 let make_month_table (month, string_month) holidays =
   let image = "{\\imagedir}/"
     ^ (string_of_int (Calendar.int_of_month month)) ^ ".jpg" in
+  (*
   let background_image =
     "{\n"
     ^ "\\usebackgroundtemplate{\n"
     ^ "\\tikz\\node[opacity=0.3] {\\includegraphics[width=\\paperwidth]{" ^ image ^ "}};\n"
     ^ "}\n"
-
-  and slide_header = "\\begin{frame}\n\\begin{center}\n"
+  *)
+  let slide_header = "\\begin{frame}\n\\begin{center}\n"
     ^ "\\begin{tabular}{c @{\\hspace{1cm}} c}\n"
     ^ "\\begin{minipage}{0.6\\textwidth}\n"
     ^ "\\vspace{-4cm}\n" in
@@ -277,7 +278,8 @@ let make_month_table (month, string_month) holidays =
   and tfooter = "\n\\hline\n\\end{tabular} \n" in
   let rows = List.map (fun month -> make_row month) string_month in
   let tbody   = List.fold_left (fun a b -> a ^ "\n" ^ b) "" rows in
-    background_image ^ slide_header ^ theader ^ tbody ^ "\n" ^ tfooter ^ slide_footer
+    (* background_image ^ *)
+    slide_header ^ theader ^ tbody ^ "\n" ^ tfooter ^ slide_footer
 
 (* Read the initial common portion of the output latex file from before.tex and return as string *)
 let before inp =
@@ -289,18 +291,19 @@ let before inp =
     b2
 
 let last_slide = 
+(*
     "{\n"
     ^ "\\usebackgroundtemplate{\n"
     ^ "\\tikz\\node[opacity=0.3] {\\includegraphics[width=\\paperwidth]{" ^ "{\\imagedir}/13.jpg" ^ "}};\n"
     ^ "}\n" ^
-
+*)
 "
 \\begin{frame}{}
 
 \\begin{center}
 \\fcolorbox{\\phbordercolour}{white}{\\includegraphics[height=0.6\\textheight]{{\\imagedir}/13.jpg}}
 \\end{center}
-\\myheader{With best compliments from Sujit \\footnote{Powered by OCaml and \\LaTeX}}
+\\myheader{With best compliments from Sujit}
 \\end{frame}
 "
 
