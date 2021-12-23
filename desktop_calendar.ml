@@ -218,7 +218,7 @@ let make_month_table (month, string_month) holidays =
     ^ "}\n"
   *)
   let slide_header = "\\begin{frame}\n\\begin{center}\n"
-    ^ "\\begin{tabular}{c @{\\hspace{1cm}} c}\n"
+    ^ "\\begin{tabular}{l @{\\hspace{.2cm}} r}\n"
     ^ "\\begin{minipage}{0.6\\textwidth}\n"
     ^ "\\vspace{-4cm}\n" in
 
@@ -252,7 +252,7 @@ let make_month_table (month, string_month) holidays =
     ^ "\\end{scriptsize}\n"
     ^ "\\end{minipage}\n"
     ^ "&\n"
-    ^ "\\fcolorbox{\\phbordercolour}{white}{\\includegraphics[width=0.35\\textwidth]{"^ image ^"}}\n"
+    ^ "\\fcolorbox{\\phbordercolour}{white}{\\includegraphics[width=0.4\\textwidth]{"^ image ^"}}\n"
     ^ "\\end{tabular}\n"
     ^ "\\end{center}\n\\end{frame}\n"
   in
