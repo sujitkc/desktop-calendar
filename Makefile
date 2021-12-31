@@ -2,7 +2,7 @@ OCAMLC=ocamlc
 OCAMLOPT = ocamlopt
 
 desktop_calendar : desktop_calendar.cmo holidayparser.cmo lexer.cmo calendar.cmo
-	$(OCAMLC) -o desktop_calendar calendar.cmo lexer.cmo holidayparser.cmo desktop_calendar.cmo; \
+	$(OCAMLC) -o desktop_calendar calendar.cmo lexer.cmo holidayparser.cmo desktop_calendar.cmo ; \
 	if [ ! -d images ]; \
 	then \
 		mkdir images; \

@@ -292,6 +292,22 @@ let is_weekend dt =
   if (wd = Saturday || wd = Sunday) then true
   else false
 
+let is_holiday dt holidays =
+  let rec iter hl =
+    match hl with
+      [] -> false
+    | h :: t ->
+    (
+      match h with
+        Working(d) -> if d = dt then false else iter t
+      | Holiday(d, _, _) -> 
+          if d = dt then true else iter t
+      | Vacation(d1, d2, _, _) -> 
+          if List.mem dt (d2 :: (daysInBetween d1 d2)) then true
+          else iter t
+    )  
+  in iter holidays
+
 (*
   Given two dates d1 and d2, return the list of all dates from d1 to d2, d1 and d2 included.
   Example:

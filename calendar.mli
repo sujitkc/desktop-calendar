@@ -45,6 +45,7 @@ type calendarday =
   | Holiday  of date * string * holiday_type
   | Vacation of date * date * string * holiday_type
 
+val is_holiday : date -> calendarday list -> bool
 val string_of_calendarday : calendarday -> string
 val nextDate : date -> date
 val is_later : date -> date -> bool
