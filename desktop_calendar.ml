@@ -68,11 +68,6 @@ let repetitive_list n i =
   in
   iter [] i
 
-type input = {
-  year : int;
-  image_dir : string;
-}
-
 (*
   Returns a list of integer lists.
   Each list of integers represents a week in the given month m of the given year y.
@@ -126,8 +121,26 @@ let parse_holiday str_holiday =
   let lexbuf = Lexing.from_string str_holiday in
   Holidayparser.parse_calendarday Lexer.scan lexbuf
 
+let set_year hl y =
+  List.map
+    (fun h ->
+        match h with
+          Calendar.Working(d) -> 
+            let Calendar.Date(dd, mm, yy) = d in
+            Calendar.Working(Calendar.Date(dd, mm, y))
+        | Calendar.Holiday(d, desc, ht) ->
+            let Calendar.Date(dd, mm, yy) = d in
+            Calendar.Holiday(Calendar.Date(dd, mm, y), desc, ht)
+        | Calendar.Vacation(d1, d2, desc, ht) -> 
+            let Calendar.Date(dd1, mm1, _) = d1
+            and Calendar.Date(dd2, mm2, _) = d2 in
+            Calendar.Vacation(Calendar.Date(dd1, mm1, y),
+                     Calendar.Date(dd2, mm2, y), desc, ht)
+    ) hl
+
+
 (* Parses the holiday list file and returns a list of holidays. *) 
-let holiday_list filename =
+let holiday_list filename y =
   let get_date day =
     match day with
       Calendar.Working(d) -> d
@@ -136,88 +149,14 @@ let holiday_list filename =
   in 
   let str_holidays = read_lines_from_file filename in
   let holidays = List.map parse_holiday str_holidays in
-  List.sort (
+  let h = List.sort (
       fun d1 d2 ->
         let dt1 = get_date d1 and dt2 = get_date d2 in
         if Calendar.is_later dt1 dt2 then 1
         else if Calendar.is_later dt2 dt1 then -1
         else 0
-    ) holidays
-
-(* Based on the holiday/working status of a specific date, 
-   suggests a colour to be used in the output. *)
-let strdate_colour day holidays =
-  let is_holiday () =
-    let rec iter hl =
-      match hl with
-        [] -> false
-      | h :: t ->
-      (
-        match h with
-          Calendar.Working(d) -> if d = day then false else iter t
-        | Calendar.Holiday(d, _, _) -> 
-            if d = day then true else iter t
-        | Calendar.Vacation(d1, d2, _, _) -> if List.mem day (d2 :: (Calendar.daysInBetween d1 d2)) then true else iter t
-      )
-    in iter holidays
-  in
-  if Calendar.is_weekend day then "\\weekendcolour"
-  else if is_holiday () then "\\holidaycolour"
-  else "\\workingdaycolour"
-
-(*
-  Returns a list of string lists. Each string list is a week of the month with
-  days represented as strings.
-Example:
-  # string_month_calendar November 2017;;
-  - : string list list =
-  [["  "; "  "; "  "; " 1"; " 2"; " 3"; " 4"];
-   [" 5"; " 6"; " 7"; " 8"; " 9"; "10"; "11"];
-   ["12"; "13"; "14"; "15"; "16"; "17"; "18"];
-   ["19"; "20"; "21"; "22"; "23"; "24"; "25"];
-   ["26"; "27"; "28"; "29"; "30"; "  "; "  "]]
-*)
-let string_month_calendar m y holidays =
-  let string_week w =
-    List.map (
-      fun d ->
-        if d = 0 then "  "
-        else "  {\\color{" ^ (strdate_colour (Calendar.Date(d, m, y)) holidays) ^ "} " ^ (string_of_int d) ^ "}"
-    ) w
-  and mc = month_calendar m y in
-  List.map string_week mc
-
-(*
-  Given a year y, returns a list of string months
-*)
-let string_year_calendar y holidays =
-  let allmonths = Calendar.[
-    January; February; March;     April;   May;      June;
-    July;    August;   September; October; November; December ] in
-  List.map (fun m -> m, (string_month_calendar m y holidays)) allmonths
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    ) holidays in
+  set_year h y
 
 (*rearch code - begin *)
 module type DAYNODE =
@@ -489,8 +428,18 @@ struct
       "\\end{tabular}\n" ^ "};"
 end
 
-module MonthPage (D : DAYNODE) (MGrid : MONTHGRID) (MonthName : MONTHNAME) 
-                  (I : IMAGE) (S : SPECIALDAYS) (N : NOTES) =
+module type VALUES =
+sig
+  val mname_pos: float * float
+  val image_pos: float * float
+  val mgrid_pos: float * float
+  val notes_pos: float * float
+  val spdays_pos: float * float
+  val mgrid_sf: float
+end
+
+module MonthPageFunctor (D : DAYNODE) (MGrid : MONTHGRID) (MonthName : MONTHNAME) 
+                  (I : IMAGE) (S : SPECIALDAYS) (N : NOTES) (V : VALUES) =
 struct
   let frame_header = 
     "%% frame - begin %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" ^
@@ -509,85 +458,158 @@ struct
   let scale text factor = "\\scalebox{" ^ (string_of_float factor) ^ "}{" ^ text ^ "}"
 
   let month_page ~m ~y ~holidays ~imfile =
-    let mtable = MGrid.grid ~m:m ~y:y ~holidays:holidays ~origin:(-2.5, -1.)
+    let mtable = MGrid.grid ~m:m ~y:y ~holidays:holidays ~origin:V.mgrid_pos (* (-2.5, -1.) *)
     in
       frame_header ^ 
-      (MonthName.month_name ~m:m ~origin:(0., 0.5)) ^
-      (I.image ~imfile:imfile ~origin:(5., -2.)) ^
-      (scale mtable 0.9) ^
-      (S.special_days ~m:m ~holidays:holidays ~origin:(0., -6.5)) ^
-      (N.notes ~origin:(5., -6.5)) ^
+      (MonthName.month_name ~m:m ~origin:V.mname_pos) ^
+      (I.image ~imfile:imfile ~origin:V.image_pos (* (5., -2.) *)) ^
+      (scale mtable V.mgrid_sf (* 0.9 *)) ^
+      (S.special_days ~m:m ~holidays:holidays ~origin:V.spdays_pos (* (0., -6.5) *)) ^
+      (N.notes ~origin:V.notes_pos (* (5., -6.5) *)) ^
       frame_footer
 end
 
-module MonthPage1 = MonthPage (DayNode) (MG1) (MonthName1) (Image1) (SpecialDays1) (Notes1)
+module Values1 : VALUES =
+struct
+  let mname_pos = (0., 0.5)
+  let image_pos = (5., -2.)
+  let mgrid_pos = (-2.5, -1.)
+  let notes_pos = (5., -6.5)
+  let spdays_pos = (0., -6.5)
+  let mgrid_sf = 0.9
+end
 
-let set_year hl y =
-  List.map
-    (fun h ->
-        match h with
-          Calendar.Working(d) -> 
-            let Calendar.Date(dd, mm, yy) = d in
-            Calendar.Working(Calendar.Date(dd, mm, y))
-        | Calendar.Holiday(d, desc, ht) ->
-            let Calendar.Date(dd, mm, yy) = d in
-            Calendar.Holiday(Calendar.Date(dd, mm, y), desc, ht)
-        | Calendar.Vacation(d1, d2, desc, ht) -> 
-            let Calendar.Date(dd1, mm1, _) = d1
-            and Calendar.Date(dd2, mm2, _) = d2 in
-            Calendar.Vacation(Calendar.Date(dd1, mm1, y),
-                     Calendar.Date(dd2, mm2, y), desc, ht)
-    ) hl
+module Values2 : VALUES =
+struct
+  let mname_pos = (0., 0.5)
+  let image_pos = (5., -2.)
+  let mgrid_pos = (-2.5, -1.)
+  let notes_pos = (5., -6.5)
+  let spdays_pos = (0., -6.5)
+  let mgrid_sf = 0.8
+end
 
-let cover_page ~y ~title ~imfile =
-  "\\begin{frame}{}\n" ^
-  "\\begin{center}\n" ^
-  "\\includegraphics[height=0.6\\textheight]{" ^ imfile ^ "}\n\n" ^
-  "\\Large{\\color{Red}" ^ (string_of_int y) ^ "}\n\n" ^
-  title ^"\n" ^
-  "\\end{center}\n" ^
-  "\\end{frame}\n"
+module MonthPage1 = MonthPageFunctor (DayNode) (MG1) (MonthName1) (Image1)
+                     (SpecialDays1) (Notes1) (Values1)
 
+module MonthPage2 = MonthPageFunctor (DayNode) (MG1) (MonthName1) (Image1)
+                     (SpecialDays1) (Notes1) (Values2)
 
-let last_page ~imfile =
-  "\\begin{frame}{}\n" ^
-  "\\begin{center}\n" ^
-  "\\includegraphics[height=0.6\\textheight]{" ^ imfile ^ "}\n\n" ^
-  "With best compliments from Sujit" ^
-  "\\footnote{\\href{github.com/sujitkc/desktop-calendar/}" ^
-  "{github.com/sujitkc/desktop-calendar/}}\n" ^
-  "\\end{center}\n" ^
-  "\\end{frame}\n"
+module type CALENDAR =
+sig
+  val generate_calendar: y:int -> title:bytes -> spdaysfile:bytes -> imfiles:bytes list -> string
+  val cover_page: y:int -> title:bytes -> imfile:bytes -> bytes
+  val last_page: imfile:bytes -> bytes
+end
 
-let generate_calendar ~y ~title ~spdaysfile ~imfiles =
-  let hl = holiday_list spdaysfile in
-  let holidays = set_year hl y in
-    (cover_page ~y:y ~title:title ~imfile:(List.nth imfiles 0)) ^
-    (MonthPage1.month_page ~m:Calendar.January ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 1)) ^
-    (MonthPage1.month_page ~m:Calendar.February ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 2)) ^
-    (MonthPage1.month_page ~m:Calendar.March ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 3)) ^
-    (MonthPage1.month_page ~m:Calendar.April ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 4)) ^
-    (MonthPage1.month_page ~m:Calendar.May ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 5)) ^
-    (MonthPage1.month_page ~m:Calendar.June ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 6)) ^
-    (MonthPage1.month_page ~m:Calendar.July ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 7)) ^
-    (MonthPage1.month_page ~m:Calendar.August ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 8)) ^
-    (MonthPage1.month_page ~m:Calendar.September ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 9)) ^
-    (MonthPage1.month_page ~m:Calendar.October ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 10)) ^
-    (MonthPage1.month_page ~m:Calendar.November ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 11)) ^
-    (MonthPage1.month_page ~m:Calendar.December ~y:y ~holidays:holidays
-       ~imfile:(List.nth imfiles 12)) ^
-    last_page ~imfile:(List.nth imfiles 13)
+module DefaultCalendar : CALENDAR =
+struct
+
+  let cover_page ~y ~title ~imfile =
+    "\\begin{frame}{}\n" ^
+    "\\begin{center}\n" ^
+    "\\includegraphics[height=0.6\\textheight]{" ^ imfile ^ "}\n\n" ^
+    "\\Large{\\color{Red}" ^ (string_of_int y) ^ "}\n\n" ^
+    title ^"\n" ^
+    "\\end{center}\n" ^
+    "\\end{frame}\n"
+
+  let last_page ~imfile =
+    "\\begin{frame}{}\n" ^
+    "\\begin{center}\n" ^
+    "\\includegraphics[height=0.6\\textheight]{" ^ imfile ^ "}\n\n" ^
+    "With best compliments from Sujit" ^
+    "\\footnote{\\href{github.com/sujitkc/desktop-calendar/}" ^
+    "{github.com/sujitkc/desktop-calendar/}}\n" ^
+    "\\end{center}\n" ^
+    "\\end{frame}\n"
+
+  let generate_calendar ~y ~title ~spdaysfile ~imfiles =
+    let holidays = holiday_list spdaysfile y in
+      (cover_page ~y:y ~title:title ~imfile:(List.nth imfiles 0)) ^
+      (MonthPage1.month_page ~m:Calendar.January ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 1)) ^
+      (MonthPage1.month_page ~m:Calendar.February ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 2)) ^
+      (MonthPage1.month_page ~m:Calendar.March ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 3)) ^
+      (MonthPage1.month_page ~m:Calendar.April ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 4)) ^
+      (MonthPage1.month_page ~m:Calendar.May ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 5)) ^
+      (MonthPage1.month_page ~m:Calendar.June ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 6)) ^
+      (MonthPage1.month_page ~m:Calendar.July ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 7)) ^
+      (MonthPage1.month_page ~m:Calendar.August ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 8)) ^
+      (MonthPage1.month_page ~m:Calendar.September ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 9)) ^
+      (MonthPage1.month_page ~m:Calendar.October ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 10)) ^
+      (MonthPage1.month_page ~m:Calendar.November ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 11)) ^
+      (MonthPage1.month_page ~m:Calendar.December ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 12)) ^
+      last_page ~imfile:(List.nth imfiles 13)
+end
+
+module CalendarStyle2 : CALENDAR =
+struct
+  let cover_page = DefaultCalendar.cover_page
+  let last_page = DefaultCalendar.last_page
+  let generate_calendar ~y ~title ~spdaysfile ~imfiles =
+    let holidays = holiday_list spdaysfile y in
+      (cover_page ~y:y ~title:title ~imfile:(List.nth imfiles 0)) ^
+      (MonthPage2.month_page ~m:Calendar.January ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 1)) ^
+      (MonthPage2.month_page ~m:Calendar.February ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 2)) ^
+      (MonthPage2.month_page ~m:Calendar.March ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 3)) ^
+      (MonthPage2.month_page ~m:Calendar.April ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 4)) ^
+      (MonthPage2.month_page ~m:Calendar.May ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 5)) ^
+      (MonthPage2.month_page ~m:Calendar.June ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 6)) ^
+      (MonthPage2.month_page ~m:Calendar.July ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 7)) ^
+      (MonthPage2.month_page ~m:Calendar.August ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 8)) ^
+      (MonthPage2.month_page ~m:Calendar.September ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 9)) ^
+      (MonthPage2.month_page ~m:Calendar.October ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 10)) ^
+      (MonthPage2.month_page ~m:Calendar.November ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 11)) ^
+      (MonthPage2.month_page ~m:Calendar.December ~y:y ~holidays:holidays
+         ~imfile:(List.nth imfiles 12)) ^
+      last_page ~imfile:(List.nth imfiles 13)
+end
+
+let nn_2022 () =
+  let y = 2022
+  and home = "/home/sujit/funcoding/desktop-calendar/desktop-calendar/calendars/desktop/2022/nn/" in
+  let spdaysfile = home ^ "special-days.txt"
+  and imfiles = [
+    (home ^ "images/december-nagpur.jpeg");
+    (home ^ "images/nachiket-riteshp-shruti.jpeg");
+    (home ^ "images/nachiket-suyog-3.jpeg");
+    (home ^ "images/shailesh-sujit-cycling.jpeg");
+    (home ^ "images/mona-shruti.jpeg");
+    (home ^ "images/nachiket-suyog-1.jpeg");
+    (home ^ "images/nagpur-diwali.jpeg");
+    (home ^ "images/nachiket-riteshp.jpeg");
+    (home ^ "images/nachiket-suyog-2.jpeg");
+    (home ^ "images/shailesh-sujit-agara.jpeg");
+    (home ^ "images/nagpur-diwali.jpeg");
+    (home ^ "images/nachiket-riteshp.jpeg");
+    (home ^ "images/nachiket-suyog-2.jpeg");
+    (home ^ "images/shailesh-sujit-agara.jpeg");
+ ] in
+ print_string (CalendarStyle2.generate_calendar ~y:y ~title:"Nagpur Nostalgia" ~spdaysfile:spdaysfile ~imfiles:imfiles)
+
 
 let ruj_2022 () =
   let y = 2022
@@ -602,8 +624,7 @@ let ruj_2022 () =
        (home ^ "images/11.jpg"); (home ^ "images/12.jpg");
        (home ^ "images/13.jpg");
   ] in
-  print_string (generate_calendar ~y:y ~title:"Kiki's World" ~spdaysfile:spdaysfile ~imfiles:imfiles)
-
+  print_string (DefaultCalendar.generate_calendar ~y:y ~title:"Kiki's World" ~spdaysfile:spdaysfile ~imfiles:imfiles)
 
 let vermas_2022 () =
   let y = 2022
@@ -618,225 +639,29 @@ let vermas_2022 () =
        (home ^ "images/11.jpg"); (home ^ "images/12.jpg");
        (home ^ "images/13.jpg");
   ] in
-  print_string (generate_calendar ~y:y ~title:"" ~spdaysfile:spdaysfile ~imfiles:imfiles)
+  print_string (DefaultCalendar.generate_calendar ~y:y ~title:"" ~spdaysfile:spdaysfile ~imfiles:imfiles)
+
+let familypack_2022 () =
+  let y = 2022
+  and home = "/home/sujit/funcoding/desktop-calendar/desktop-calendar/calendars/desktop/2022/family-pack/" in
+  let spdaysfile = home ^ "special-days.txt"
+  and imfiles = [(home ^ "images/0.jpg");
+       (home ^ "images/1.jpg"); (home ^ "images/2.jpg");
+       (home ^ "images/3.jpg"); (home ^ "images/4.jpg");
+       (home ^ "images/idukki.jpeg"); (home ^ "images/6.jpg");
+       (home ^ "images/7.jpg"); (home ^ "images/8.jpg");
+       (home ^ "images/painting.jpeg"); (home ^ "images/10.jpg");
+       (home ^ "images/11.jpg"); (home ^ "images/12.jpg");
+       (home ^ "images/13.jpg");
+  ] in
+  print_string (DefaultCalendar.generate_calendar ~y:y ~title:"Family Pack" ~spdaysfile:spdaysfile ~imfiles:imfiles)
+
 
 
 (* 
 let _ = ruj_2022 ()
- *)
 let _ = vermas_2022 ()
+let _ = familypack_2022 ()
+ *)
+let _ = nn_2022 ()
 (*rearch code - end *)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(* Transforms a string representation of a week into its LaTeX representation. *)
-let make_row strweek =
-  let rec iter w =
-    match w with
-      d :: [] -> d ^ " \\\\"
-    | d :: t  -> d ^ " & " ^ (iter t)
-    | _ -> raise (DesktopCalendarException "Bad week string")
-  in
-  iter strweek
-
-(* Given a string month, generate a latex table for it. *)
-let make_month_table (month, string_month) holidays =
-  let image = "{\\imagedir}/"
-    ^ (string_of_int (Calendar.int_of_month month)) ^ ".jpg" in
-  (*
-  let background_image =
-    "{\n"
-    ^ "\\usebackgroundtemplate{\n"
-    ^ "\\tikz\\node[opacity=0.3] {\\includegraphics[width=\\paperwidth]{" ^ image ^ "}};\n"
-    ^ "}\n"
-  *)
-  let slide_header = "\\begin{frame}\n\\begin{center}\n"
-    ^ "\\begin{tabular}{l @{\\hspace{.2cm}} r}\n"
-    ^ "\\begin{minipage}{0.6\\textwidth}\n"
-    ^ "\\vspace{-4cm}\n" in
-
-  let month_holidays = List.filter
-    (
-      fun h ->
-        match h with
-          Calendar.Working(Calendar.Date(_, m, _)) -> m = month
-        | Calendar.Holiday(Calendar.Date(_, m, _), s, ht) -> m = month
-        | Calendar.Vacation(Calendar.Date(_, m, _), Calendar.Date(_, _, _), _, _) -> m = month
-    ) holidays in
-  let holiday_rows = List.map
-    (
-      fun h ->
-        match h with
-          Calendar.Working(Calendar.Date(d, _, _)) -> (string_of_int d) ^ " & working \\\\\n"
-        | Calendar.Holiday(Calendar.Date(d, _, _), s, ht) -> (string_of_int d) ^ " & " ^ s ^ "\\\\\n"
-        | Calendar.Vacation(Calendar.Date(d1, m1, _), Calendar.Date(d2, m2, _), s, _) ->
-            (string_of_int d1) ^ " " ^ (Calendar.string_of_month m1) ^ " - " ^
-            (string_of_int d2) ^ " " ^ (Calendar.string_of_month m2) ^ " & " ^ s ^ "\\\\\n" 
-    ) month_holidays in
-
-  let slide_footer = 
-      "\\vspace{1cm}\n"
-    ^ "\\begin{scriptsize}\n"
-    ^ "\\begin{tabular}{| l @{\\hspace{0.5cm}} p{0.8\\textwidth} |}\n"
-    ^ "\\hline\n"
-    ^ (List.fold_left (fun a b -> a ^ b) "" holiday_rows)
-    ^ "\\hline\n"
-    ^ "\\end{tabular}\n"
-    ^ "\\end{scriptsize}\n"
-    ^ "\\end{minipage}\n"
-    ^ "&\n"
-    ^ "\\fcolorbox{\\phbordercolour}{white}{\\includegraphics[width=0.4\\textwidth]{"^ image ^"}}\n"
-    ^ "\\end{tabular}\n"
-    ^ "\\end{center}\n\\end{frame}\n"
-  in
-
-  let rec n_header_cells = function
-    0 -> ""
-  | n -> "c |" ^ (n_header_cells (n - 1)) in
-  let theader = "\\begin{tabular}{|" ^ (n_header_cells 7) ^ "}" 
-    ^ "\n\\hline"
-    ^ "\\multicolumn{7}{| c |}"
-    ^ "{\\textsc{\\color{\\monthcolour}\\underline{\\scalebox{1.2}{\\Large "
-    ^ (Calendar.string_of_month month)
-    ^"}}}} \\\\"
-    ^ "\\hline"
-    ^ "\\cellcolor{\\headercolour}\\textbf{\\color{mymaroon}Su} & "
-    ^ "\\cellcolor{\\headercolour}\\textbf{\\color{mymaroon}Mo} & "
-    ^ "\\cellcolor{\\headercolour}\\textbf{\\color{mymaroon}Tu} & "
-    ^ "\\cellcolor{\\headercolour}\\textbf{\\color{mymaroon}We} & "
-    ^ "\\cellcolor{\\headercolour}\\textbf{\\color{mymaroon}Th} & "
-    ^ "\\cellcolor{\\headercolour}\\textbf{\\color{mymaroon}Fr} & "
-    ^ "\\cellcolor{\\headercolour}\\textbf{\\color{mymaroon}Sa} \\\\"
-
-  and tfooter = "\n\\hline\n\\end{tabular} \n" in
-  let rows = List.map (fun month -> make_row month) string_month in
-  let tbody   = List.fold_left (fun a b -> a ^ "\n" ^ b) "" rows in
-    (* background_image ^ *)
-    slide_header ^ theader ^ tbody ^ "\n" ^ tfooter ^ slide_footer
-
-(* Read the initial common portion of the output latex file from before.tex and return as string *)
-let before inp =
-  let b1 = read_file "b1.tex"
-  and b2 = read_file "b2.tex" in
-    b1 ^ "\n" ^ 
-    "\\date{\\Huge{" ^ (string_of_int inp.year) ^ "}}" ^ "\n" ^
-    "\\newcommand{\\imagedir}{" ^ inp.image_dir ^ "}" ^ "\n" ^
-    b2
-
-let last_slide = 
-(*
-    "{\n"
-    ^ "\\usebackgroundtemplate{\n"
-    ^ "\\tikz\\node[opacity=0.3] {\\includegraphics[width=\\paperwidth]{" ^ "{\\imagedir}/13.jpg" ^ "}};\n"
-    ^ "}\n" ^
-*)
-"
-\\begin{frame}{}
-
-\\begin{center}
-\\fcolorbox{\\phbordercolour}{white}{\\includegraphics[height=0.6\\textheight]{{\\imagedir}/13.jpg}}
-\\end{center}
-%\\myheader{With best compliments from Sujit}
-\\end{frame}
-"
-
-(* Return the last part of the output latex file *)
-let after = last_slide ^ "\n" ^ "\\end{document}"
-
-(* Given a list of attendances attendance_lst, generate a latex string corresponding to it. *)
-let calendar_to_tex inp holidays =
-  let tables =
-    let month_lst = string_year_calendar inp.year holidays in
-    let table_lst = List.map (fun m -> (make_month_table m holidays)) month_lst in
-    (List.fold_left (fun a b -> a ^ "\n" ^ b) " " table_lst)
-  in
-  (before inp) ^ "\n" ^ tables ^ "\n" ^ after
-
-(* Generate the latex file for the attendance list. *)
-let gen_latex_file latex =
-  let ochan = open_out ("output/" ^ "desktop_calendar.tex") in
-    output_string ochan latex;
-    close_out ochan
-
-let main () =
-  let num_of_args = Array.length Sys.argv in
-  if num_of_args <> 4 then
-    print_endline ("Exactly three command-line argument required.\n" ^
-      "Usage: ./desktop_calendar <year> <holiday-file> <image-directory>")
-  else
-    let y = (int_of_string Sys.argv.(1))
-    and hfile = Sys.argv.(2) in
-
-    let h = List.map
-      (
-        fun hd ->
-          match hd with
-            Calendar.Working(Calendar.Date(d, m, _))            ->
-                Calendar.Working(Calendar.Date(d, m, y))
-          | Calendar.Holiday(Calendar.Date(d, m, _), s, ht)     ->
-                Calendar.Holiday(Calendar.Date(d, m, y), s, ht)
-          | Calendar.Vacation(Calendar.Date(d1, m1, _), 
-              Calendar.Date(d2, m2, _), s, ht)                  ->
-                Calendar.Vacation(Calendar.Date(d1, m1, y), Calendar.Date(d2, m2, y), s, ht)
-      )
-      (holiday_list hfile) in
-
-    let image_dir = Sys.argv.(3) in
-    let inp = { year = y; image_dir = image_dir; } in
-    let latex = (calendar_to_tex inp h) in
-    begin
-      gen_latex_file latex;
-      print_string "generating latex file ...";
-      let _ = Sys.command ("pdflatex "
-          ^ "-output-directory=output output/"
-          ^ "desktop_calendar.tex  >/dev/null") in ();                    (* latex to pdf id *)
-      print_string "generated. \n";
-(*      let _ = Sys.command ("rm " ^ "output/" ^ "desktop_calendar.tex") in (); (* remove latex file *) *)
-      let _ = Sys.command ("rm " ^ "output/" ^ "desktop_calendar.aux") in (); (* remove aux file *)
-      let _ = Sys.command ("rm " ^ "output/" ^ "desktop_calendar.log") in ()  (* remove log file *)
-    end
-
-let test_holiday_list () =
-    let y = 2019 in
-    let _ = List.map
-      (
-        fun hd ->
-          match hd with
-            Calendar.Working(Calendar.Date(d, m, _))            ->
-                Calendar.Working(Calendar.Date(d, m, y))
-          | Calendar.Holiday(Calendar.Date(d, m, _), s, ht)     ->
-                Calendar.Holiday(Calendar.Date(d, m, y), s, ht)
-          | Calendar.Vacation(Calendar.Date(d1, m1, _), 
-              Calendar.Date(d2, m2, _), s, ht)                  ->
-                Calendar.Vacation(Calendar.Date(d1, m1, y), Calendar.Date(d2, m2, y), s, ht)
-      )
-      (holiday_list "input/holidays-iiitb-2019.txt") in
-    print_endline "done"
-
-  
-(* let _ = main () *)
-(* let _ = test_holiday_list () *)
