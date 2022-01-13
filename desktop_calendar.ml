@@ -138,7 +138,6 @@ let set_year hl y =
                      Calendar.Date(dd2, mm2, y), desc, ht)
     ) hl
 
-
 (* Parses the holiday list file and returns a list of holidays. *) 
 let holiday_list filename y =
   let get_date day =
@@ -182,7 +181,8 @@ sig
     offset:float * float ->
     origin:float * float -> bytes
   val weekday_name :
-    day:Calendar.weekDay -> offset:float * float -> origin:float * float -> bytes
+    day:Calendar.weekDay -> offset:float * float -> origin:float * float ->
+                              bytes
 end
 
 module DayNode : DAYNODE =
@@ -203,14 +203,16 @@ struct
     let offset_x, offset_y = offset and origin_x, origin_y = origin in
     let x = offset_x +. origin_x and y = offset_y +. origin_y in
     let strx = (string_of_float x) and stry = (string_of_float y) in
-      "\\node[draw=Black, fill=" ^ fc ^ ", rounded corners, minimum width = 0.6cm]"
+      "\\node[draw=Black, fill=" ^ fc ^
+      ", rounded corners, minimum width = 0.6cm]"
       ^ "(" ^ node_name ^ ")" ^ "at (" ^ strx ^ "," ^ stry ^ ")"
       ^ "{" ^ (colour ~t:text ~c:tc) ^ "};"
 
-  let day_node ~day ~offset ~origin ~tc (* text colour *) ~fc (* fill colour *)=
+  let day_node ~day ~offset ~origin ~tc (* text colour *)
+               ~fc (* fill colour *)=
     let strd = string_of_int day in
-    node ~text:strd ~node_name:("d" ^ strd) ~offset:offset ~origin:origin ~tc:tc
-         ~fc:fc
+    node ~text:strd ~node_name:("d" ^ strd) ~offset:offset ~origin:origin
+         ~tc:tc ~fc:fc
 
   let normal_day ~day ~offset ~origin =
     let tc = "Black" and fc = "none" in
@@ -243,12 +245,15 @@ struct
   let weekday_name ~day ~offset ~origin =
     let tc = "Black" and fc = "Red!20" in
     let strwd = strweekday day in
-    node ~text:(bolden strwd) ~node_name:strwd ~offset:offset ~origin:origin ~tc:tc ~fc:fc
+    node ~text:(bolden strwd) ~node_name:strwd ~offset:offset ~origin:origin
+         ~tc:tc ~fc:fc
 end
 
 module type MONTHGRID =
 sig
-  val grid : m:Calendar.month -> y:int -> holidays:Calendar.calendarday list -> origin:(float * float) -> bytes
+  val grid : m:Calendar.month -> y:int ->
+             holidays:Calendar.calendarday list ->
+             origin:(float * float) -> bytes
 end
 
 module MonthGrid (D : DAYNODE) =
@@ -280,7 +285,8 @@ struct
     let first_weekday = (Calendar.getWeekDay (Calendar.Date(1, m, y))) in
     let begin_padded_month_list =
       List.append 
-        (repetitive_list D.Empty ((Calendar.week_day_number first_weekday) - 1))
+        (repetitive_list D.Empty
+                         ((Calendar.week_day_number first_weekday) - 1))
         month_list in
     let padded_month_list =
       List.append 
@@ -301,8 +307,8 @@ struct
                                ~origin:origin
       | D.Weekend(d')       -> D.holi_day ~day:d' ~offset:(offset, yoffset)
                                ~origin:origin
-      | D.WeekdayName(wday) -> D.weekday_name ~day:wday  ~offset:(offset, yoffset)
-                               ~origin:origin
+      | D.WeekdayName(wday) -> D.weekday_name ~day:wday
+                               ~offset:(offset, yoffset) ~origin:origin
       in
       let rec loop1 wk col =
         if col = List.length wk then ""
@@ -324,7 +330,8 @@ struct
     ] in
     let rec loop2 mtable row =
       if row = List.length mtable then ""
-      else (strweek (List.nth mtable row) row origin) ^ "\n" ^ loop2 mtable (row + 1)
+      else (strweek (List.nth mtable row) row origin) ^ "\n" ^ loop2 mtable
+                    (row + 1)
     in
     (loop2 (wkheader :: mdays) 0)
 end
@@ -377,7 +384,9 @@ struct
           match h with
             Calendar.Working(Calendar.Date(_, m, _)) -> m = month
           | Calendar.Holiday(Calendar.Date(_, m, _), s, ht) -> m = month
-          | Calendar.Vacation(Calendar.Date(_, m, _), Calendar.Date(_, _, _), _, _) -> m = month
+          | Calendar.Vacation(
+              Calendar.Date(_, m, _),
+              Calendar.Date(_, _, _), _, _) -> m = month
       ) holidays
 
   let holiday_rows month_holidays =
@@ -385,11 +394,15 @@ struct
       (
         fun h ->
           match h with
-            Calendar.Working(Calendar.Date(d, _, _)) -> (string_of_int d) ^ " & working \\\\\n"
-          | Calendar.Holiday(Calendar.Date(d, _, _), s, ht) -> (string_of_int d) ^ " & " ^ s ^ "\\\\\n"
-          | Calendar.Vacation(Calendar.Date(d1, m1, _), Calendar.Date(d2, m2, _), s, _) ->
-              (string_of_int d1) ^ " " ^ (Calendar.string_of_month m1) ^ " - " ^
-              (string_of_int d2) ^ " " ^ (Calendar.string_of_month m2) ^ " & " ^ s ^ "\\\\\n" 
+            Calendar.Working(Calendar.Date(d, _, _)) ->
+                (string_of_int d) ^ " & working \\\\\n"
+          | Calendar.Holiday(Calendar.Date(d, _, _), s, ht) ->
+                (string_of_int d) ^ " & " ^ s ^ "\\\\\n"
+          | Calendar.Vacation(Calendar.Date(d1, m1, _),
+              Calendar.Date(d2, m2, _), s, _) ->
+                (string_of_int d1) ^ " " ^ (Calendar.string_of_month m1) ^
+                " - " ^ (string_of_int d2) ^ " " ^
+                (Calendar.string_of_month m2) ^ " & " ^ s ^ "\\\\\n"
       ) month_holidays in
     List.fold_left (fun x y -> x ^ y) "" rows
 
@@ -438,8 +451,9 @@ sig
   val mgrid_sf: float
 end
 
-module MonthPageFunctor (D : DAYNODE) (MGrid : MONTHGRID) (MonthName : MONTHNAME) 
-                  (I : IMAGE) (S : SPECIALDAYS) (N : NOTES) (V : VALUES) =
+module MonthPageFunctor (D : DAYNODE) (MGrid : MONTHGRID)
+        (MonthName : MONTHNAME) (I : IMAGE) (S : SPECIALDAYS) (N : NOTES)
+        (V : VALUES) =
 struct
   let frame_header = 
     "%% frame - begin %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n" ^
@@ -458,14 +472,14 @@ struct
   let scale text factor = "\\scalebox{" ^ (string_of_float factor) ^ "}{" ^ text ^ "}"
 
   let month_page ~m ~y ~holidays ~imfile =
-    let mtable = MGrid.grid ~m:m ~y:y ~holidays:holidays ~origin:V.mgrid_pos (* (-2.5, -1.) *)
+    let mtable = MGrid.grid ~m:m ~y:y ~holidays:holidays ~origin:V.mgrid_pos
     in
       frame_header ^ 
       (MonthName.month_name ~m:m ~origin:V.mname_pos) ^
-      (I.image ~imfile:imfile ~origin:V.image_pos (* (5., -2.) *)) ^
-      (scale mtable V.mgrid_sf (* 0.9 *)) ^
-      (S.special_days ~m:m ~holidays:holidays ~origin:V.spdays_pos (* (0., -6.5) *)) ^
-      (N.notes ~origin:V.notes_pos (* (5., -6.5) *)) ^
+      (I.image ~imfile:imfile ~origin:V.image_pos) ^
+      (scale mtable V.mgrid_sf) ^
+      (S.special_days ~m:m ~holidays:holidays ~origin:V.spdays_pos) ^
+      (N.notes ~origin:V.notes_pos) ^
       frame_footer
 end
 
@@ -499,7 +513,7 @@ module type CALENDAR =
 sig
   val generate_calendar: y:int -> title:bytes -> spdaysfile:bytes -> imfiles:bytes list -> string
   val cover_page: y:int -> title:bytes -> imfile:bytes -> bytes
-  val last_page: imfile:bytes -> bytes
+  val last_page: imfile:bytes -> sender:bytes -> bytes
 end
 
 module DefaultCalendar : CALENDAR =
@@ -514,13 +528,13 @@ struct
     "\\end{center}\n" ^
     "\\end{frame}\n"
 
-  let last_page ~imfile =
+  let last_page ~imfile ~sender =
     "\\begin{frame}{}\n" ^
     "\\begin{center}\n" ^
     "\\includegraphics[height=0.6\\textheight]{" ^ imfile ^ "}\n\n" ^
-    "With best compliments from Sujit" ^
-    "\\footnote{\\href{github.com/sujitkc/desktop-calendar/}" ^
-    "{github.com/sujitkc/desktop-calendar/}}\n" ^
+    "With best compliments from " ^ sender ^
+    "\\footnote{\\href{https://github.com/sujitkc/desktop-calendar/}" ^
+    "{https://github.com/sujitkc/desktop-calendar/}}\n" ^
     "\\end{center}\n" ^
     "\\end{frame}\n"
 
@@ -551,7 +565,7 @@ struct
          ~imfile:(List.nth imfiles 11)) ^
       (MonthPage1.month_page ~m:Calendar.December ~y:y ~holidays:holidays
          ~imfile:(List.nth imfiles 12)) ^
-      last_page ~imfile:(List.nth imfiles 13)
+      last_page ~imfile:(List.nth imfiles 13) ~sender:"Sujit"
 end
 
 module CalendarStyle2 : CALENDAR =
@@ -585,10 +599,11 @@ struct
          ~imfile:(List.nth imfiles 11)) ^
       (MonthPage2.month_page ~m:Calendar.December ~y:y ~holidays:holidays
          ~imfile:(List.nth imfiles 12)) ^
-      last_page ~imfile:(List.nth imfiles 13)
+      last_page ~imfile:(List.nth imfiles 13) ~sender:"Sujit with Suvarna and Monali"
 end
 
 let nn_2022 () =
+
   let y = 2022
   and home = "/home/sujit/funcoding/desktop-calendar/desktop-calendar/calendars/desktop/2022/nn/" in
   let spdaysfile = home ^ "special-days.txt"
