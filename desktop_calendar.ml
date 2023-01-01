@@ -171,18 +171,18 @@ sig
     day:int ->
     offset:float * float ->
     origin:float * float ->
-    tc:bytes -> fc:bytes -> bytes
+    tc:string -> fc:string -> string
   val normal_day :
-    day:int -> offset:float * float -> origin:float * float -> bytes
+    day:int -> offset:float * float -> origin:float * float -> string
   val special_day :
-    day:int -> offset:float * float -> origin:float * float -> bytes
+    day:int -> offset:float * float -> origin:float * float -> string
   val holi_day : 
     day:int ->
     offset:float * float ->
-    origin:float * float -> bytes
+    origin:float * float -> string
   val weekday_name :
     day:Calendar.weekDay -> offset:float * float -> origin:float * float ->
-                              bytes
+                              string
 end
 
 module DayNode : DAYNODE =
@@ -253,7 +253,7 @@ module type MONTHGRID =
 sig
   val grid : m:Calendar.month -> y:int ->
              holidays:Calendar.calendarday list ->
-             origin:(float * float) -> bytes
+             origin:(float * float) -> string
 end
 
 module MonthGrid (D : DAYNODE) =
@@ -340,7 +340,7 @@ module MG1 = MonthGrid (DayNode)
 
 module type MONTHNAME =
 sig
-  val month_name : m:Calendar.month -> origin:float * float -> bytes 
+  val month_name : m:Calendar.month -> origin:float * float -> string 
 end
 
 module MonthName1 : MONTHNAME =
@@ -356,7 +356,7 @@ end
 
 module type IMAGE =
 sig
-  val image : imfile:bytes -> origin:float * float -> bytes
+  val image : imfile:string -> origin:float * float -> string
 end
 
 module Image1 : IMAGE =
@@ -372,7 +372,7 @@ end
 module type SPECIALDAYS =
 sig
   val special_days: m:Calendar.month -> holidays:Calendar.calendarday list -> 
-    origin:float * float -> bytes 
+    origin:float * float -> string 
 end
 
 module SpecialDays1 : SPECIALDAYS =
@@ -424,7 +424,7 @@ end
 
 module type NOTES =
 sig
-  val notes : origin:float * float -> bytes
+  val notes : origin:float * float -> string
 end
 
 module Notes1 : NOTES =
@@ -511,9 +511,9 @@ module MonthPage2 = MonthPageFunctor (DayNode) (MG1) (MonthName1) (Image1)
 
 module type CALENDAR =
 sig
-  val generate_calendar: y:int -> title:bytes -> spdaysfile:bytes -> imfiles:bytes list -> string
-  val cover_page: y:int -> title:bytes -> imfile:bytes -> bytes
-  val last_page: imfile:bytes -> sender:bytes -> bytes
+  val generate_calendar: y:int -> title:string -> spdaysfile:string -> imfiles:string list -> string
+  val cover_page: y:int -> title:string -> imfile:string -> string
+  val last_page: imfile:string -> sender:string -> string
 end
 
 module DefaultCalendar : CALENDAR =
@@ -599,13 +599,13 @@ struct
          ~imfile:(List.nth imfiles 11)) ^
       (MonthPage2.month_page ~m:Calendar.December ~y:y ~holidays:holidays
          ~imfile:(List.nth imfiles 12)) ^
-      last_page ~imfile:(List.nth imfiles 13) ~sender:"Sujit with Suvarna and Monali"
+      last_page ~imfile:(List.nth imfiles 13) ~sender:"Sujit; Pictures: Swathi"
 end
 
 let nn_2022 () =
 
   let y = 2022
-  and home = "/home/sujit/funcoding/desktop-calendar/desktop-calendar/calendars/desktop/2022/nn/" in
+  and home = "calendars/desktop/2022/nn/" in
   let spdaysfile = home ^ "special-days.txt"
   and imfiles = [
     (home ^ "images/december-nagpur.jpeg");
@@ -671,12 +671,60 @@ let familypack_2022 () =
   ] in
   print_string (DefaultCalendar.generate_calendar ~y:y ~title:"Family Pack" ~spdaysfile:spdaysfile ~imfiles:imfiles)
 
+let iiitb_2023 () =
+
+  let y = 2023
+  and home = "calendars/desktop/2023/IIITB/" in
+  let spdaysfile = home ^ "special-days.txt"
+  and imfiles = [
+     (home ^ "images/01-January-republic-day.jpg");
+     (home ^ "images/02-february-NAAC-certificate.jpg");
+     (home ^ "images/03-march-spandan.jpg");
+     (home ^ "images/04-april-infin8.jpg");
+     (home ^ "images/05-may-IAS-probationers.jpg");
+     (home ^ "images/06-june-yoga-day.jpg");
+     (home ^ "images/08-august-independence-day.jpg");
+     (home ^ "images/09-september-foundation-day.jpg");
+     (home ^ "images/10-october-pravahan.jpg");
+     (home ^ "images/07-july-convocation.jpg");
+     (home ^ "images/11-november-karnataka-rajyotsava.jpg");
+		 (home ^ "images/12-december-solar-power-plant.jpg");
+     (home ^ "images/04-april-deans-office-inauguration.jpg");
+     (home ^ "images/04-april-deans-office-inauguration.jpg");
+  ] in
+ print_string (CalendarStyle2.generate_calendar ~y:y ~title:"IIITB through 2022" ~spdaysfile:spdaysfile ~imfiles:imfiles)
+
+(*
+*)
+let familypack_2023 () =
+  let y = 2023
+  and home = "calendars/desktop/2023/family-pack/" in
+  let spdaysfile = home ^ "special-days.txt"
+  and imfiles = [
+   	     (home ^ "images/1.jpg");
+  	     (home ^ "images/1.jpg");
+  	     (home ^ "images/2.jpg");
+  	     (home ^ "images/3.jpg");
+  	     (home ^ "images/4.jpg");
+  	     (home ^ "images/5.jpg");
+  	     (home ^ "images/6.jpg");
+  	     (home ^ "images/7.jpg");
+  	     (home ^ "images/8.png");
+  	     (home ^ "images/9.jpg");
+  	     (home ^ "images/10.jpg");
+  	     (home ^ "images/11.jpg");
+  	     (home ^ "images/12.jpg");
+  	     (home ^ "images/1.jpg");
+] in
+  print_string (DefaultCalendar.generate_calendar ~y:y ~title:"Family Pack" ~spdaysfile:spdaysfile ~imfiles:imfiles)
 
 
 (* 
 let _ = ruj_2022 ()
 let _ = vermas_2022 ()
 let _ = familypack_2022 ()
- *)
 let _ = nn_2022 ()
+let _ = iiitb_2023 ()
+ *)
+let _ = familypack_2023 ()
 (*rearch code - end *)
